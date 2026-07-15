@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Little Log — Baby Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg: #14171c;
+    --bg-elev: #1d2128;
+    --bg-elev-2: #262b34;
+    --line: #333944;
+    --text: #eae7e0;
+    --text-dim: #8d94a1;
+    --feed: #e8a87c;
+    --feed-dim: #6b5643;
+    --sleep: #7c9cbf;
+    --sleep-dim: #3f4f60;
+    --poop: #a8b57a;
+    --poop-dim: #545c3a;
+    --warn: #c9645a;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px;}
+
+  header.top{
+    padding:28px 0 18px 0;
+    border-bottom:1px solid var(--line);
+  }
+  header.top .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin:0 0 4px 0;
+  }
+  header.top h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:32px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  header.top .baby-name-row{
+    margin-top:10px;
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-size:14px;
+    color:var(--text-dim);
+  }
+  header.top input#babyName{
+    background:transparent;
+    border:none;
+    border-bottom:1px dashed var(--line);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    padding:2px 2px;
+    width:160px;
+  }
+  header.top input#babyName:focus{outline:none;border-bottom-color:var(--feed);}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    margin:22px 0 22px 0;
+    background:var(--bg-elev);
+    border-radius:12px;
+    padding:4px;
+  }
+  nav.tabs button{
+    flex:1;
+    background:transparent;
+    border:none;
+    color:var(--text-dim);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:10px 6px;
+    border-radius:9px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+    letter-spacing:.01em;
+  }
+  nav.tabs button .dot{
+    display:inline-block;width:6px;height:6px;border-radius:50%;
+    margin-right:6px;vertical-align:middle;
+  }
+  nav.tabs button.active{background:var(--bg-elev-2);color:var(--text);}
+  nav.tabs button:not(.active):hover{color:var(--text);}
+
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .18s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
+
+  .card{
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:18px;
+    margin:0 0 16px 0;
+  }
+  .field-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .field{flex:1;min-width:120px;display:flex;flex-direction:column;gap:6px;}
+  .field label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  input[type=date], input[type=time], input[type=number], input[type=text], select, textarea{
+    background:var(--bg-elev-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 10px;
+    border-radius:7px;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+  }
+  input:focus, select:focus, textarea:focus{outline:none;border-color:var(--feed);}
+  textarea{resize:vertical;min-height:44px;font-family:'Inter',sans-serif;}
+
+  .choice-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .choice-btn{
+    background:var(--bg-elev-2);
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:9px 14px;
+    border-radius:20px;
+    font-size:13px;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .choice-btn:hover{border-color:var(--text-dim);color:var(--text);}
+  .choice-btn.selected{color:#14171c;font-weight:700;border-color:transparent;}
+  .choice-btn.selected.c-feed{background:var(--feed);}
+  .choice-btn.selected.c-sleep{background:var(--sleep);}
+  .choice-btn.selected.c-poop{background:var(--poop);}
+  .choice-btn.selected.c-warn{background:var(--warn);color:#fff;}
+
+  .submit-btn{
+    margin-top:6px;
+    border:none;
+    padding:12px 22px;
+    border-radius:8px;
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    color:#14171c;
+  }
+  .submit-btn.c-feed{background:var(--feed);}
+  .submit-btn.c-sleep{background:var(--sleep);}
+  .submit-btn.c-poop{background:var(--poop);}
+  .submit-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  table.log{width:100%;border-collapse:collapse;font-size:13px;}
+  table.log th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);
+    padding:6px 8px;border-bottom:1px solid var(--line);
+  }
+  table.log td{padding:8px 8px;border-bottom:1px solid var(--line);}
+  table.log tr:last-child td{border-bottom:none;}
+  .tag{
+    display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;
+  }
+  .del-btn{
+    background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:15px;
+    padding:2px 6px;
+  }
+  .del-btn:hover{color:var(--warn);}
+  .empty-state{color:var(--text-dim);font-size:13px;padding:14px 0;text-align:center;}
+
+  /* summary */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;}
+  .stat-box{
+    background:var(--bg-elev-2);border-radius:8px;padding:12px 14px;
+  }
+  .stat-box .label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  .stat-box .value{font-family:'Fraunces',serif;font-size:22px;font-weight:600;}
+  .stat-box .value span{font-size:13px;font-family:'Inter',sans-serif;color:var(--text-dim);font-weight:400;}
+
+  .rhythm-wrap{overflow-x:auto;}
+  .rhythm-legend{display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--text-dim);}
+  .rhythm-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .rhythm-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+  canvas{max-width:100%;}
+  .chart-box{margin-bottom:26px;}
+  .chart-box h3{
+    font-family:'Fraunces',serif;font-size:14px;font-weight:600;margin:0 0 10px 0;color:var(--text-dim);
+    text-transform:none;
+  }
+  .backup-row{display:flex;gap:10px;margin-top:4px;}
+  .backup-row button{
+    background:var(--bg-elev-2);border:1px solid var(--line);color:var(--text-dim);
+    padding:8px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+  }
+  .backup-row button:hover{color:var(--text);border-color:var(--text-dim);}
+  #importFile{display:none;}
+  .since-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .since-box{
+    flex:1;min-width:140px;border-radius:8px;padding:14px;
+    border:1px solid var(--line);
+  }
+  .since-box .k{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;}
+  .since-box .v{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin-top:4px;}
+  .since-box.feed{border-color:var(--feed-dim);}
+  .since-box.sleep{border-color:var(--sleep-dim);}
+  .since-box.poop{border-color:var(--poop-dim);}
+
+  /* auth gate */
+  #authGate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:18px;padding:24px;text-align:center;
+  }
+  #authGate h1{font-family:'Fraunces',serif;font-size:30px;font-weight:600;margin:0;}
+  #authGate p{color:var(--text-dim);font-size:14px;max-width:340px;margin:0;}
+  .google-btn{
+    display:flex;align-items:center;gap:10px;background:#fff;color:#1f1f1f;
+    border:none;padding:11px 20px;border-radius:8px;font-family:'Inter',sans-serif;
+    font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .google-btn:hover{background:#f2f2f2;}
+  .google-btn svg{width:18px;height:18px;}
+  #authError{
+    color:var(--warn);font-size:13px;max-width:420px;background:var(--bg-elev);
+    border:1px solid var(--warn);border-radius:8px;padding:12px 16px;display:none;
+    text-align:left;
+  }
+  #authError code{font-family:'IBM Plex Mono',monospace;font-size:11px;word-break:break-all;}
+  #configWarning{
+    display:none;background:var(--bg-elev);border:1px solid var(--warn);color:var(--text);
+    border-radius:8px;padding:14px 16px;font-size:13px;max-width:460px;text-align:left;
+  }
+  #configWarning code{font-family:'IBM Plex Mono',monospace;color:var(--feed);font-size:12px;}
+
+  .user-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin-top:10px;font-size:12px;color:var(--text-dim);
+  }
+  .user-bar .who{display:flex;align-items:center;gap:8px;}
+  .user-bar img{width:22px;height:22px;border-radius:50%;}
+  .user-bar button{
+    background:none;border:1px solid var(--line);color:var(--text-dim);
+    padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+  }
+  .user-bar button:hover{color:var(--text);border-color:var(--text-dim);}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--poop);display:inline-block;}
+  .sync-dot.offline{background:var(--warn);}
+</style>
+</head>
+<body>
+
+<div id="authGate">
+  <h1>Little Log</h1>
+  <p>Sign in with Google to sync feeding, diaper, and sleep logs to a Google Sheet in your Drive — accessible from every device.</p>
+  <button class="google-btn" id="googleSignInBtn">
+    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 16.3 3 9.7 7.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 10-2 13.5-5.2l-6.2-5.3C29.3 36.4 26.8 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.6 40.5 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.2 5.3C40.9 36.4 44 30.8 44 24c0-1.4-.1-2.5-.4-3.5z"/></svg>
+    Sign in with Google
+  </button>
+  <div id="authError"></div>
+  <div id="configWarning">
+    <strong>Google sign-in isn't configured yet.</strong><br><br>
+    Open this file and replace the placeholder value for <code>GOOGLE_CLIENT_ID</code>
+    (near the top of the <code>&lt;script&gt;</code> at the bottom of the file) with your own
+    OAuth Client ID from Google Cloud Console. See the setup guide for step-by-step instructions.
+  </div>
+</div>
+
+
+<div class="wrap" id="appRoot" style="display:none;">
+
+  <header class="top">
+    <p class="eyebrow">little log · feeding · sleep · diapers</p>
+    <h1>Little Log</h1>
+    <div class="baby-name-row">
+      tracking for <input type="text" id="babyName" placeholder="baby's name" value="Wren">
+    </div>
+    <div class="user-bar">
+      <div class="who">
+        <img id="userPhoto" src="" alt="">
+        <span id="userEmail"></span>
+        <span class="sync-dot" id="syncDot" title="Synced"></span>
+      </div>
+      <button id="signOutBtn">Sign out</button>
+      </div>
+    <div style="text-align:right;margin-top:-6px;">
+      <button id="syncNowBtn" style="background:none;border:1px solid var(--line);color:var(--text-dim);padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;">Sync now</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="feed"><span class="dot" style="background:var(--feed)"></span>Feeding</button>
+    <button class="tab-btn" data-tab="poop"><span class="dot" style="background:var(--poop)"></span>Diapers</button>
+    <button class="tab-btn" data-tab="sleep"><span class="dot" style="background:var(--sleep)"></span>Sleep</button>
+    <button class="tab-btn" data-tab="summary"><span class="dot" style="background:var(--text-dim)"></span>Summary</button>
+  </nav>
+
+  <!-- FEEDING -->
+  <div class="panel active" id="panel-feed">
+    <div class="card">
+      <h2>Log a feed</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="feedDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="feedTime">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Type</label>
+          <select id="feedType">
+            <option value="Breast (L)">Breast — left</option>
+            <option value="Breast (R)">Breast — right</option>
+            <option value="Breast (both)">Breast — both sides</option>
+            <option value="Bottle (breastmilk)">Bottle — breastmilk</option>
+            <option value="Bottle (formula)">Bottle — formula</option>
+            <option value="Solids">Solids</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Duration (min)</label>
+          <input type="number" id="feedDuration" min="0" placeholder="e.g. 15">
+        </div>
+        <div class="field">
+          <label>Amount (oz / g)</label>
+          <input type="number" id="feedAmount" min="0" step="0.1" placeholder="e.g. 4">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea id="feedNotes" placeholder="fussy, spit up, distracted..."></textarea>
+        </div>
+      </div>
+      <button class="submit-btn c-feed" id="feedSubmit">Save feed</button>
+    </div>
+    <div class="card">
+      <h2>Recent feeds</h2>
+      <div id="feedLog"></div>
+    </div>
+  </div>
+
+  <!-- POOP -->
+  <div class="panel" id="panel-poop">
+    <div class="card">
+      <h2>Log a diaper</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="poopDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="poopTime">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;">
+        <label>Contents</label>
+        <div class="choice-grid" id="poopContentGrid">
+          <button type="button" class="choice-btn c-poop" data-group="content" data-val="Wet only">Wet only</button>
+          <button type="button" class="choice-btn c-poop" data-group="content" data-val="Dirty only">Dirty only</button>
+          <button type="button" class="choice-btn c-poop" data-group="content" data-val="Mixed">Mixed</button>
+          <button type="button" class="choice-btn c-poop" data-group="content" data-val="Dry">Dry</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;">
+        <label>Consistency</label>
+        <div class="choice-grid" id="poopConsistGrid">
+          <button type="button" class="choice-btn c-poop" data-group="consist" data-val="Watery">Watery</button>
+          <button type="button" class="choice-btn c-poop" data-group="consist" data-val="Seedy / runny">Seedy / runny</button>
+          <button type="button" class="choice-btn c-poop" data-group="consist" data-val="Soft / mushy">Soft / mushy</button>
+          <button type="button" class="choice-btn c-poop" data-group="consist" data-val="Formed">Formed</button>
+          <button type="button" class="choice-btn c-poop" data-group="consist" data-val="Hard / pellets">Hard / pellets</button>
+          <button type="button" class="choice-btn c-poop" data-group="consist" data-val="Mucousy">Mucousy</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;">
+        <label>Color</label>
+        <div class="choice-grid" id="poopColorGrid">
+          <button type="button" class="choice-btn c-poop" data-group="color" data-val="Yellow">Yellow</button>
+          <button type="button" class="choice-btn c-poop" data-group="color" data-val="Mustard">Mustard</button>
+          <button type="button" class="choice-btn c-poop" data-group="color" data-val="Brown">Brown</button>
+          <button type="button" class="choice-btn c-poop" data-group="color" data-val="Green">Green</button>
+          <button type="button" class="choice-btn c-poop" data-group="color" data-val="Black (tarry)">Black (tarry)</button>
+          <button type="button" class="choice-btn c-warn" data-group="color" data-val="Red / blood">Red / blood</button>
+          <button type="button" class="choice-btn c-warn" data-group="color" data-val="White / pale">White / pale</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px;">
+        <label>Diet stage</label>
+        <div class="choice-grid" id="poopStageGrid">
+          <button type="button" class="choice-btn c-poop" data-group="stage" data-val="Breastfed">Breastfed</button>
+          <button type="button" class="choice-btn c-poop" data-group="stage" data-val="Formula">Formula</button>
+          <button type="button" class="choice-btn c-poop" data-group="stage" data-val="Starting solids">Starting solids</button>
+          <button type="button" class="choice-btn c-poop" data-group="stage" data-val="Solids">Solids</button>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea id="poopNotes" placeholder="rash, straining, unusual smell..."></textarea>
+        </div>
+      </div>
+      <button class="submit-btn c-poop" id="poopSubmit">Save diaper</button>
+    </div>
+    <div class="card">
+      <h2>Recent diapers</h2>
+      <div id="poopLog"></div>
+    </div>
+  </div>
+
+  <!-- SLEEP -->
+  <div class="panel" id="panel-sleep">
+    <div class="card">
+      <h2>Log sleep</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="sleepDate">
+        </div>
+        <div class="field">
+          <label>Start time</label>
+          <input type="time" id="sleepStart">
+        </div>
+        <div class="field">
+          <label>End time</label>
+          <input type="time" id="sleepEnd">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea id="sleepNotes" placeholder="nap, night sleep, woke crying..."></textarea>
+        </div>
+      </div>
+      <p style="color:var(--text-dim);font-size:12px;margin-top:-4px;">Tip: for sleep that crosses midnight, just enter the start date — the end time is assumed to be the next morning if it's earlier than the start time.</p>
+      <button class="submit-btn c-sleep" id="sleepSubmit">Save sleep</button>
+    </div>
+    <div class="card">
+      <h2>Recent sleep</h2>
+      <div id="sleepLog"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="panel" id="panel-summary">
+
+    <div class="card">
+      <h2>Since last...</h2>
+      <div class="since-row">
+        <div class="since-box feed"><div class="k" style="color:var(--feed)">Last feed</div><div class="v" id="sinceFeed">—</div></div>
+        <div class="since-box sleep"><div class="k" style="color:var(--sleep)">Last sleep</div><div class="v" id="sinceSleep">—</div></div>
+        <div class="since-box poop"><div class="k" style="color:var(--poop)">Last diaper</div><div class="v" id="sincePoop">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>24-hour rhythm — last 3 days</h2>
+      <div class="rhythm-wrap">
+        <svg id="rhythmSvg" width="720" height="130"></svg>
+      </div>
+      <div class="rhythm-legend">
+        <span><i style="background:var(--feed)"></i>Feed</span>
+        <span><i style="background:var(--sleep)"></i>Sleep</span>
+        <span><i style="background:var(--poop)"></i>Diaper</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Daily totals (last 14 days)</h2>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="label">Feeds / day (avg)</div><div class="value" id="avgFeedsDay">—</div></div>
+        <div class="stat-box"><div class="label">Sleep / day (avg)</div><div class="value" id="avgSleepDay">—</div></div>
+        <div class="stat-box"><div class="label">Diapers / day (avg)</div><div class="value" id="avgPoopDay">—</div></div>
+      </div>
+
+      <div class="chart-box">
+        <h3>Feed count &amp; volume by day</h3>
+        <canvas id="chartFeed" height="180"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Sleep hours by day</h3>
+        <canvas id="chartSleep" height="180"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Diaper count by day (wet vs dirty vs mixed)</h3>
+        <canvas id="chartPoopDay" height="180"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Diaper consistency mix (last 14 days)</h3>
+        <canvas id="chartPoopConsist" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Your data</h2>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:0;">Everything you log is written to a Google Sheet named "Little Log Data" in your own Drive — no separate dashboard, just a spreadsheet you can open, read, or edit directly any time.</p>
+      <a id="openSheetLink" href="#" target="_blank" rel="noopener" style="display:none;color:var(--feed);font-size:13px;font-weight:600;text-decoration:none;">Open the spreadsheet in Google Sheets →</a>
+    </div>
+
+    <div class="card">
+      <h2>Backup</h2>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:0;">Your data lives in Google Sheets, so it's already backed up by Drive. Export a JSON copy anyway if you want an offline snapshot, or to move data into a fresh sheet.</p>
+      <div class="backup-row">
+        <button id="exportBtn">Export JSON</button>
+        <button id="importBtn">Import JSON</button>
+        <input type="file" id="importFile" accept="application/json">
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /#appRoot -->
+
+<script>
+/* ---------- Google OAuth config ----------
+   Replace this placeholder with your own OAuth 2.0 Client ID from Google
+   Cloud Console (APIs & Services -> Credentials -> Create Credentials ->
+   OAuth client ID -> Application type: Web application). This value is
+   safe to be public -- it identifies your app, it is not a secret. */
+const GOOGLE_CLIENT_ID = "17948348973-5107jmefajpe672s50ttjlcrv5qch3sa.apps.googleusercontent.com";
+const OAUTH_SCOPE = [
+  "https://www.googleapis.com/auth/drive.file",   // only files this app creates -- not your whole Drive
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile"
+].join(" ");
+
+const CONFIG_IS_PLACEHOLDER = GOOGLE_CLIENT_ID.startsWith("__GOOGLE");
+
+let tokenClient = null;
+let accessToken = null, tokenExpiresAt = 0;
+let currentUser = null;
+let spreadsheetId = null;
+let pollTimer = null;
+
+if(CONFIG_IS_PLACEHOLDER){
+  document.getElementById('configWarning').style.display = 'block';
+  document.getElementById('googleSignInBtn').disabled = true;
+  document.getElementById('googleSignInBtn').style.opacity = 0.4;
+} else {
+  window.addEventListener('load', ()=>{
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: OAUTH_SCOPE,
+      callback: ()=>{} // overwritten per-call in requestToken()
+    });
+  });
+}
+
+function requestToken(promptType){
+  return new Promise((resolve, reject)=>{
+    tokenClient.callback = (resp)=>{
+      if(resp.error){ reject(resp); return; }
+      accessToken = resp.access_token;
+      tokenExpiresAt = Date.now() + (resp.expires_in * 1000) - 60000;
+      resolve(accessToken);
+    };
+    tokenClient.error_callback = (err)=> reject(err);
+    tokenClient.requestAccessToken({ prompt: promptType });
+  });
+}
+
+async function ensureToken(){
+  if(accessToken && Date.now() < tokenExpiresAt) return accessToken;
+  return requestToken(""); // silent renewal if the user is still signed in to Google in this browser
+}
+
+function showAuthError(err){
+  const box = document.getElementById('authError');
+  box.style.display = 'block';
+  const code = err && (err.type || err.error) || 'unknown_error';
+  box.innerHTML = 'Sign-in failed: <code>' + code + '</code><br>' +
+    (code === 'popup_closed' || code === 'access_denied'
+      ? 'The sign-in window was closed or access was declined.'
+      : 'If this is a new setup, double-check that the domain you\'re opening this page from is listed under "Authorized JavaScript origins" for this OAuth Client ID in Google Cloud Console.');
+}
+
+document.getElementById('googleSignInBtn').addEventListener('click', async ()=>{
+  document.getElementById('authError').style.display = 'none';
+  try{
+    await requestToken('consent');
+    await afterSignIn();
+  } catch(err){ showAuthError(err); }
+});
+
+document.getElementById('signOutBtn').addEventListener('click', ()=>{
+  if(pollTimer) clearInterval(pollTimer);
+  window.removeEventListener('focus', quietRefresh);
+  if(accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
+  accessToken = null; tokenExpiresAt = 0; currentUser = null; spreadsheetId = null;
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('authGate').style.display = 'flex';
+});
+
+async function afterSignIn(){
+  const profile = await fetchUserInfo();
+  currentUser = profile;
+  document.getElementById('userEmail').textContent = profile.email || profile.name || '';
+  document.getElementById('userPhoto').src = profile.picture || '';
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'block';
+
+  spreadsheetId = await findOrCreateSpreadsheet();
+  document.getElementById('openSheetLink').href = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+  document.getElementById('openSheetLink').style.display = 'inline';
+  await loadAll();
+
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(quietRefresh, 25000); // light polling for cross-device updates
+  window.addEventListener('focus', quietRefresh);
+}
+
+function quietRefresh(){
+  if(spreadsheetId) loadAll().catch(()=>{ document.getElementById('syncDot').classList.add('offline'); });
+}
+document.getElementById('syncNowBtn').addEventListener('click', quietRefresh);
+
+async function fetchUserInfo(){
+  const token = await ensureToken();
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers:{ Authorization:`Bearer ${token}` } });
+  return res.json();
+}
+
+/* ---------- Google Sheets / Drive data layer ----------
+   All of the app's data lives in one Google Sheet, "Little Log Data",
+   created in the signed-in user's own Drive the first time they sign in.
+   Tabs: Feeds, Poops, Sleeps, Meta. Each row includes an id + a Deleted
+   flag column (soft-delete, so row numbers stay stable while in use). */
+
+const SHEET_COLUMNS = {
+  feeds:  ['id','date','time','type','duration','amount','notes','deleted'],
+  poops:  ['id','date','time','content','consist','color','stage','notes','deleted'],
+  sleeps: ['id','date','start','end','duration','notes','deleted']
+};
+const SHEET_TAB = { feeds:'Feeds', poops:'Poops', sleeps:'Sleeps' };
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function colLetter(i){ return String.fromCharCode(65 + i); }
+
+async function findOrCreateSpreadsheet(){
+  const token = await ensureToken();
+  const q = encodeURIComponent("name='Little Log Data' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`, {
+    headers:{ Authorization:`Bearer ${token}` }
+  });
+  const data = await res.json();
+  if(data.files && data.files.length > 0) return data.files[0].id;
+  return await createSpreadsheet();
+}
+
+async function createSpreadsheet(){
+  const token = await ensureToken();
+  const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    method:'POST',
+    headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      properties:{ title:'Little Log Data' },
+      sheets:[
+        { properties:{ title:'Feeds' } },
+        { properties:{ title:'Poops' } },
+        { properties:{ title:'Sleeps' } },
+        { properties:{ title:'Meta' } }
+      ]
+    })
+  });
+  const created = await createRes.json();
+  const id = created.spreadsheetId;
+  await writeHeaders(id, 'Feeds', SHEET_COLUMNS.feeds);
+  await writeHeaders(id, 'Poops', SHEET_COLUMNS.poops);
+  await writeHeaders(id, 'Sleeps', SHEET_COLUMNS.sleeps);
+  await writeHeaders(id, 'Meta', ['key','value']);
+  await appendRow(id, 'Meta', ['babyName', '']);
+  return id;
+}
+
+async function writeHeaders(id, tab, headers){
+  const token = await ensureToken();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${tab}!A1?valueInputOption=RAW`, {
+    method:'PUT',
+    headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ values:[headers] })
+  });
+}
+
+async function appendRow(id, tab, rowValues){
+  const token = await ensureToken();
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${tab}!A:Z:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+    method:'POST',
+    headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ values:[rowValues] })
+  });
+  return res.json();
+}
+
+async function getRows(id, tab){
+  const token = await ensureToken();
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${tab}!A2:Z20000`, {
+    headers:{ Authorization:`Bearer ${token}` }
+  });
+  if(!res.ok) throw new Error('sheets read failed: ' + res.status);
+  const data = await res.json();
+  return data.values || [];
+}
+
+function rowsToObjects(rows, cols){
+  const delIdx = cols.indexOf('deleted');
+  return rows
+    .filter(r => (r[delIdx] || '').toString().toUpperCase() !== 'TRUE')
+    .map(r => { const o = {}; cols.forEach((c,i) => o[c] = r[i] ?? ''); return o; });
+}
+
+async function addEntry(kind, obj){
+  const cols = SHEET_COLUMNS[kind];
+  const id = uid();
+  const row = cols.map(c => c === 'id' ? id : (c === 'deleted' ? '' : (obj[c] ?? '')));
+  await appendRow(spreadsheetId, SHEET_TAB[kind], row);
+}
+
+async function deleteEntryRemote(kind, id){
+  const cols = SHEET_COLUMNS[kind];
+  const tab = SHEET_TAB[kind];
+  const rawRows = await getRows(spreadsheetId, tab);
+  const idx = rawRows.findIndex(r => r[0] === id);
+  if(idx === -1) return;
+  const rowNum = idx + 2; // +1 for header row, +1 for 1-based indexing
+  const delColLetter = colLetter(cols.indexOf('deleted'));
+  const token = await ensureToken();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${tab}!${delColLetter}${rowNum}?valueInputOption=RAW`, {
+    method:'PUT',
+    headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ values:[['TRUE']] })
+  });
+}
+
+async function clearAndWrite(tab, cols, entries){
+  const token = await ensureToken();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${tab}!A2:Z20000:clear`, {
+    method:'POST', headers:{ Authorization:`Bearer ${token}` }
+  });
+  if(entries.length === 0) return;
+  const rows = entries.map(e => cols.map(c => c === 'id' ? (e.id || uid()) : (c === 'deleted' ? '' : (e[c] ?? ''))));
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${tab}!A2?valueInputOption=USER_ENTERED`, {
+    method:'PUT',
+    headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ values: rows })
+  });
+}
+
+async function saveBabyName(name){
+  const token = await ensureToken();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Meta!B2?valueInputOption=RAW`, {
+    method:'PUT',
+    headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({ values:[[name]] })
+  });
+}
+
+let feeds = [], poops = [], sleeps = [];
+
+async function loadAll(){
+  const [feedRows, poopRows, sleepRows, metaRows] = await Promise.all([
+    getRows(spreadsheetId, 'Feeds'),
+    getRows(spreadsheetId, 'Poops'),
+    getRows(spreadsheetId, 'Sleeps'),
+    getRows(spreadsheetId, 'Meta')
+  ]);
+  feeds = rowsToObjects(feedRows, SHEET_COLUMNS.feeds);
+  poops = rowsToObjects(poopRows, SHEET_COLUMNS.poops);
+  sleeps = rowsToObjects(sleepRows, SHEET_COLUMNS.sleeps).map(s => ({...s, duration: parseInt(s.duration || 0, 10)}));
+
+  const metaMap = {};
+  metaRows.forEach(r => { metaMap[r[0]] = r[1]; });
+  if(typeof metaMap.babyName === 'string' && document.activeElement !== nameInput) nameInput.value = metaMap.babyName;
+
+  renderFeedLog(); renderPoopLog(); renderSleepLog();
+  if(document.getElementById('panel-summary').classList.contains('active')) renderSummary();
+  document.getElementById('syncDot').classList.remove('offline');
+}
+
+/* ---------- baby name ---------- */
+const nameInput = document.getElementById('babyName');
+let nameSaveTimer = null;
+nameInput.addEventListener('input', ()=>{
+  clearTimeout(nameSaveTimer);
+  nameSaveTimer = setTimeout(()=>{
+    if(!spreadsheetId) return;
+    saveBabyName(nameInput.value).catch(()=>{});
+  }, 600);
+});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'summary') renderSummary();
+  });
+});
+
+/* ---------- defaults for date/time fields ---------- */
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function nowTimeStr(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+['feedDate','poopDate','sleepDate'].forEach(id=> document.getElementById(id).value = todayStr());
+['feedTime','poopTime'].forEach(id=> document.getElementById(id).value = nowTimeStr());
+
+/* ---------- choice buttons (poop) ---------- */
+const poopSelections = { content:null, consist:null, color:null, stage:null };
+document.querySelectorAll('.choice-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const group = btn.dataset.group;
+    document.querySelectorAll(`.choice-btn[data-group="${group}"]`).forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    poopSelections[group] = btn.dataset.val;
+  });
+});
+
+/* ---------- FEED submit ---------- */
+document.getElementById('feedSubmit').addEventListener('click', async ()=>{
+  const date = document.getElementById('feedDate').value;
+  const time = document.getElementById('feedTime').value;
+  if(!date || !time){ alert('Please set a date and time.'); return; }
+  const btn = document.getElementById('feedSubmit');
+  btn.disabled = true;
+  try{
+    await addEntry('feeds', {
+      date, time,
+      type: document.getElementById('feedType').value,
+      duration: document.getElementById('feedDuration').value || null,
+      amount: document.getElementById('feedAmount').value || null,
+      notes: document.getElementById('feedNotes').value || ''
+    });
+    document.getElementById('feedDuration').value='';
+    document.getElementById('feedAmount').value='';
+    document.getElementById('feedNotes').value='';
+    document.getElementById('feedTime').value = nowTimeStr();
+    await loadAll();
+  } catch(err){ alert('Could not save: ' + err.message); }
+  btn.disabled = false;
+});
+
+/* ---------- POOP submit ---------- */
+document.getElementById('poopSubmit').addEventListener('click', async ()=>{
+  const date = document.getElementById('poopDate').value;
+  const time = document.getElementById('poopTime').value;
+  if(!date || !time){ alert('Please set a date and time.'); return; }
+  if(!poopSelections.content){ alert('Pick a "Contents" option.'); return; }
+  const btn = document.getElementById('poopSubmit');
+  btn.disabled = true;
+  try{
+    await addEntry('poops', {
+      date, time,
+      content: poopSelections.content,
+      consist: poopSelections.consist,
+      color: poopSelections.color,
+      stage: poopSelections.stage,
+      notes: document.getElementById('poopNotes').value || ''
+    });
+    document.getElementById('poopNotes').value='';
+    document.getElementById('poopTime').value = nowTimeStr();
+    document.querySelectorAll('.choice-btn.selected').forEach(b=>b.classList.remove('selected'));
+    Object.keys(poopSelections).forEach(k=>poopSelections[k]=null);
+    await loadAll();
+  } catch(err){ alert('Could not save: ' + err.message); }
+  btn.disabled = false;
+});
+
+/* ---------- SLEEP submit ---------- */
+document.getElementById('sleepSubmit').addEventListener('click', async ()=>{
+  const date = document.getElementById('sleepDate').value;
+  const start = document.getElementById('sleepStart').value;
+  const end = document.getElementById('sleepEnd').value;
+  if(!date || !start || !end){ alert('Please set date, start and end time.'); return; }
+  let [sh,sm] = start.split(':').map(Number);
+  let [eh,em] = end.split(':').map(Number);
+  let startMin = sh*60+sm, endMin = eh*60+em;
+  let duration = endMin - startMin;
+  if(duration <= 0) duration += 24*60; // crossed midnight
+  const btn = document.getElementById('sleepSubmit');
+  btn.disabled = true;
+  try{
+    await addEntry('sleeps', { date, start, end, duration, notes: document.getElementById('sleepNotes').value || '' });
+    document.getElementById('sleepStart').value='';
+    document.getElementById('sleepEnd').value='';
+    document.getElementById('sleepNotes').value='';
+    await loadAll();
+  } catch(err){ alert('Could not save: ' + err.message); }
+  btn.disabled = false;
+});
+
+/* ---------- delete helper ----------
+   Sheets has no live listener, so after the delete call succeeds we
+   explicitly reload this account's data to refresh the on-screen lists. */
+function deleteEntry(collectionName, arr, id){
+  deleteEntryRemote(collectionName, id)
+    .then(()=> loadAll())
+    .catch(err=> alert('Could not delete: ' + err.message));
+}
+
+/* ---------- render logs ---------- */
+function fmtDT(date, time){ return date + ' · ' + time; }
+
+function renderFeedLog(){
+  const el = document.getElementById('feedLog');
+  if(feeds.length===0){ el.innerHTML='<div class="empty-state">No feeds logged yet.</div>'; return; }
+  const rows = [...feeds].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time)).slice(0,25);
+  let html = '<table class="log"><tr><th>When</th><th>Type</th><th>Dur</th><th>Amt</th><th></th></tr>';
+  rows.forEach(f=>{
+    html += `<tr>
+      <td>${fmtDT(f.date,f.time)}</td>
+      <td><span class="tag" style="background:var(--feed-dim);color:var(--feed)">${f.type}</span></td>
+      <td>${f.duration ? f.duration+' min' : '—'}</td>
+      <td>${f.amount ? f.amount : '—'}</td>
+      <td><button class="del-btn" onclick="deleteEntry('feeds', feeds, '${f.id}')">✕</button></td>
+    </tr>`;
+  });
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+function renderPoopLog(){
+  const el = document.getElementById('poopLog');
+  if(poops.length===0){ el.innerHTML='<div class="empty-state">No diapers logged yet.</div>'; return; }
+  const rows = [...poops].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time)).slice(0,25);
+  let html = '<table class="log"><tr><th>When</th><th>Contents</th><th>Consistency</th><th>Color</th><th></th></tr>';
+  rows.forEach(p=>{
+    const warnColor = (p.color && (p.color.includes('Red') || p.color.includes('White')));
+    html += `<tr>
+      <td>${fmtDT(p.date,p.time)}</td>
+      <td><span class="tag" style="background:var(--poop-dim);color:var(--poop)">${p.content}</span></td>
+      <td>${p.consist || '—'}</td>
+      <td>${p.color ? `<span class="tag" style="background:${warnColor?'#4a2a28':'var(--poop-dim)'};color:${warnColor?'var(--warn)':'var(--poop)'}">${p.color}</span>` : '—'}</td>
+      <td><button class="del-btn" onclick="deleteEntry('poops', poops, '${p.id}')">✕</button></td>
+    </tr>`;
+  });
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+function renderSleepLog(){
+  const el = document.getElementById('sleepLog');
+  if(sleeps.length===0){ el.innerHTML='<div class="empty-state">No sleep logged yet.</div>'; return; }
+  const rows = [...sleeps].sort((a,b)=> (b.date+b.start).localeCompare(a.date+a.start)).slice(0,25);
+  let html = '<table class="log"><tr><th>Date</th><th>Start</th><th>End</th><th>Dur</th><th></th></tr>';
+  rows.forEach(s=>{
+    const h = Math.floor(s.duration/60), m = s.duration%60;
+    html += `<tr>
+      <td>${s.date}</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td><span class="tag" style="background:var(--sleep-dim);color:var(--sleep)">${h}h ${m}m</span></td>
+      <td><button class="del-btn" onclick="deleteEntry('sleeps', sleeps, '${s.id}')">✕</button></td>
+    </tr>`;
+  });
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+renderFeedLog(); renderPoopLog(); renderSleepLog();
+
+/* ---------- summary ---------- */
+let chartFeed, chartSleep, chartPoopDay, chartPoopConsist;
+
+function hoursAgoLabel(ts){
+  if(!ts) return '—';
+  const diffMs = Date.now() - ts;
+  const mins = Math.floor(diffMs/60000);
+  if(mins < 60) return mins + 'm ago';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h+'h '+m+'m ago';
+}
+function toTs(date,time){ return new Date(date+'T'+(time||'00:00')+':00').getTime(); }
+
+function lastN_Days(n){
+  const days = [];
+  for(let i=n-1;i>=0;i--){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    days.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return days;
+}
+
+function renderSummary(){
+  // since-last
+  const lastFeed = [...feeds].sort((a,b)=> toTs(b.date,b.time)-toTs(a.date,a.time))[0];
+  const lastSleepArr = [...sleeps].sort((a,b)=> toTs(b.date,b.start)-toTs(a.date,a.start))[0];
+  const lastPoop = [...poops].sort((a,b)=> toTs(b.date,b.time)-toTs(a.date,a.time))[0];
+  document.getElementById('sinceFeed').textContent = lastFeed ? hoursAgoLabel(toTs(lastFeed.date,lastFeed.time)) : '—';
+  document.getElementById('sinceSleep').textContent = lastSleepArr ? hoursAgoLabel(toTs(lastSleepArr.date,lastSleepArr.start)) : '—';
+  document.getElementById('sincePoop').textContent = lastPoop ? hoursAgoLabel(toTs(lastPoop.date,lastPoop.time)) : '—';
+
+  const days14 = lastN_Days(14);
+
+  // avg feeds/day, sleep/day, poop/day
+  const feedCountByDay = {}, poopCountByDay = {}, sleepMinByDay = {};
+  days14.forEach(d=>{ feedCountByDay[d]=0; poopCountByDay[d]=0; sleepMinByDay[d]=0; });
+  feeds.forEach(f=>{ if(f.date in feedCountByDay) feedCountByDay[f.date]++; });
+  poops.forEach(p=>{ if(p.date in poopCountByDay) poopCountByDay[p.date]++; });
+  sleeps.forEach(s=>{ if(s.date in sleepMinByDay) sleepMinByDay[s.date]+=s.duration; });
+
+  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  document.getElementById('avgFeedsDay').innerHTML = avg(Object.values(feedCountByDay)).toFixed(1) + '<span> / day</span>';
+  document.getElementById('avgSleepDay').innerHTML = (avg(Object.values(sleepMinByDay))/60).toFixed(1) + '<span> hrs</span>';
+  document.getElementById('avgPoopDay').innerHTML = avg(Object.values(poopCountByDay)).toFixed(1) + '<span> / day</span>';
+
+  // feed volume by day (sum of numeric amounts)
+  const feedVolByDay = {};
+  days14.forEach(d=> feedVolByDay[d]=0);
+  feeds.forEach(f=>{ if(f.date in feedVolByDay && f.amount) feedVolByDay[f.date]+=parseFloat(f.amount); });
+
+  const shortLabels = days14.map(d=> d.slice(5));
+
+  if(chartFeed) chartFeed.destroy();
+  chartFeed = new Chart(document.getElementById('chartFeed'), {
+    data:{
+      labels: shortLabels,
+      datasets:[
+        {type:'bar', label:'Feed count', data:days14.map(d=>feedCountByDay[d]), backgroundColor:'#e8a87c', order:2, yAxisID:'y'},
+        {type:'line', label:'Volume (oz/g)', data:days14.map(d=>feedVolByDay[d]), borderColor:'#f0c9a8', backgroundColor:'#f0c9a8', tension:.3, order:1, yAxisID:'y1'}
+      ]
+    },
+    options:{
+      responsive:true,
+      scales:{
+        y:{beginAtZero:true, ticks:{color:'#8d94a1'}, grid:{color:'#333944'}},
+        y1:{beginAtZero:true, position:'right', ticks:{color:'#8d94a1'}, grid:{display:false}},
+        x:{ticks:{color:'#8d94a1'}, grid:{display:false}}
+      },
+      plugins:{legend:{labels:{color:'#eae7e0'}}}
+    }
+  });
+
+  if(chartSleep) chartSleep.destroy();
+  chartSleep = new Chart(document.getElementById('chartSleep'), {
+    type:'bar',
+    data:{ labels: shortLabels, datasets:[{label:'Sleep (hrs)', data: days14.map(d=>(sleepMinByDay[d]/60).toFixed(2)), backgroundColor:'#7c9cbf'}] },
+    options:{
+      responsive:true,
+      scales:{ y:{beginAtZero:true, ticks:{color:'#8d94a1'}, grid:{color:'#333944'}}, x:{ticks:{color:'#8d94a1'}, grid:{display:false}} },
+      plugins:{legend:{display:false}}
+    }
+  });
+
+  // poop by day, stacked wet/dirty/mixed/dry
+  const poopKinds = ['Wet only','Dirty only','Mixed','Dry'];
+  const poopKindColors = {'Wet only':'#7c9cbf','Dirty only':'#a8b57a','Mixed':'#c9a45a','Dry':'#555c68'};
+  const poopByDayKind = {};
+  days14.forEach(d=> poopByDayKind[d] = {'Wet only':0,'Dirty only':0,'Mixed':0,'Dry':0});
+  poops.forEach(p=>{ if(p.date in poopByDayKind && poopKinds.includes(p.content)) poopByDayKind[p.date][p.content]++; });
+
+  if(chartPoopDay) chartPoopDay.destroy();
+  chartPoopDay = new Chart(document.getElementById('chartPoopDay'), {
+    type:'bar',
+    data:{
+      labels:shortLabels,
+      datasets: poopKinds.map(k=>({label:k, data:days14.map(d=>poopByDayKind[d][k]), backgroundColor:poopKindColors[k]}))
+    },
+    options:{
+      responsive:true,
+      scales:{ y:{beginAtZero:true, stacked:true, ticks:{color:'#8d94a1'}, grid:{color:'#333944'}}, x:{stacked:true, ticks:{color:'#8d94a1'}, grid:{display:false}} },
+      plugins:{legend:{labels:{color:'#eae7e0'}}}
+    }
+  });
+
+  // consistency distribution pie (last 14 days)
+  const consistCount = {};
+  poops.filter(p=>days14.includes(p.date) && p.consist).forEach(p=>{ consistCount[p.consist]=(consistCount[p.consist]||0)+1; });
+  const consistLabels = Object.keys(consistCount);
+  const consistPalette = ['#a8b57a','#8fa066','#c9a45a','#7c9cbf','#c9645a','#9d8ab0','#6b7280'];
+
+  if(chartPoopConsist) chartPoopConsist.destroy();
+  chartPoopConsist = new Chart(document.getElementById('chartPoopConsist'), {
+    type:'doughnut',
+    data:{ labels: consistLabels, datasets:[{ data: consistLabels.map(l=>consistCount[l]), backgroundColor: consistPalette }] },
+    options:{ responsive:true, plugins:{legend:{position:'bottom', labels:{color:'#eae7e0'}}} }
+  });
+
+  renderRhythm();
+}
+
+/* ---------- 24h rhythm strip (last 3 days) signature visual ---------- */
+function renderRhythm(){
+  const svg = document.getElementById('rhythmSvg');
+  const days = lastN_Days(3);
+  const rowH = 34, leftPad = 46, topPad = 8, width = 660;
+  svg.setAttribute('height', topPad*2 + rowH*days.length + 20);
+  svg.innerHTML = '';
+  const ns = 'http://www.w3.org/2000/svg';
+
+  function el(tag, attrs){
+    const e = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k,v])=> e.setAttribute(k,v));
+    return e;
+  }
+
+  // hour gridlines + labels (every 6h)
+  for(let h=0; h<=24; h+=6){
+    const x = leftPad + (h/24)*width;
+    const line = el('line', {x1:x,y1:topPad,x2:x,y2:topPad+rowH*days.length, stroke:'#333944','stroke-width':1});
+    svg.appendChild(line);
+    const label = el('text', {x:x, y: topPad+rowH*days.length+14, fill:'#8d94a1','font-size':10,'font-family':'IBM Plex Mono, monospace','text-anchor':'middle'});
+    label.textContent = String(h).padStart(2,'0')+':00';
+    svg.appendChild(label);
+  }
+
+  days.forEach((day, rowIdx)=>{
+    const y = topPad + rowIdx*rowH;
+    const dayLabel = el('text', {x:0, y:y+rowH/2+4, fill:'#8d94a1','font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    dayLabel.textContent = day.slice(5);
+    svg.appendChild(dayLabel);
+
+    const baseline = el('line', {x1:leftPad,y1:y+rowH/2,x2:leftPad+width,y2:y+rowH/2, stroke:'#262b34','stroke-width':10});
+    svg.appendChild(baseline);
+
+    // sleep segments
+    sleeps.filter(s=>s.date===day).forEach(s=>{
+      const [sh,sm] = s.start.split(':').map(Number);
+      const startMin = sh*60+sm;
+      const durMin = s.duration;
+      let x = leftPad + (startMin/1440)*width;
+      let w = (durMin/1440)*width;
+      if(x + w > leftPad+width){ w = (leftPad+width) - x; } // clip if crosses midnight visually
+      svg.appendChild(el('rect',{x, y:y+rowH/2-6, width:Math.max(w,3), height:12, rx:4, fill:'#7c9cbf'}));
+    });
+    // feed marks
+    feeds.filter(f=>f.date===day).forEach(f=>{
+      const [fh,fm] = f.time.split(':').map(Number);
+      const x = leftPad + ((fh*60+fm)/1440)*width;
+      svg.appendChild(el('circle',{cx:x, cy:y+rowH/2, r:5, fill:'#e8a87c'}));
+    });
+    // poop marks
+    poops.filter(p=>p.date===day).forEach(p=>{
+      const [ph,pm] = p.time.split(':').map(Number);
+      const x = leftPad + ((ph*60+pm)/1440)*width;
+      const tri = el('polygon', {points:`${x-5},${y+rowH/2+9} ${x+5},${y+rowH/2+9} ${x},${y+rowH/2+1}`, fill:'#a8b57a'});
+      svg.appendChild(tri);
+    });
+  });
+}
+
+/* ---------- export / import ----------
+   Export reads the live local cache (fast, no extra API calls).
+   Import replaces every row in the Feeds/Poops/Sleeps tabs of your Google
+   Sheet with the imported backup, using the same clearAndWrite() helper
+   used elsewhere -- a values.clear followed by one bulk values.update. */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const data = { feeds, poops, sleeps, name: nameInput.value, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'little-log-backup-' + todayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async evt=>{
+    try{
+      const data = JSON.parse(evt.target.result);
+      if(!confirm('This will replace every row in your Little Log Data spreadsheet with the imported backup. Continue?')) return;
+      await clearAndWrite('Feeds', SHEET_COLUMNS.feeds, data.feeds || []);
+      await clearAndWrite('Poops', SHEET_COLUMNS.poops, data.poops || []);
+      await clearAndWrite('Sleeps', SHEET_COLUMNS.sleeps, data.sleeps || []);
+      if(data.name){ await saveBabyName(data.name); nameInput.value = data.name; }
+      await loadAll();
+      alert('Backup imported.');
+    }catch(err){ alert('Could not import that backup: ' + err.message); }
+  };
+  reader.readAsText(file);
+});
+</script>
+</body>
+</html>
