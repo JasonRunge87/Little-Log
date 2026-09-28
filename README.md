@@ -1,6 +1,6 @@
 # Little Log
 
-A single-page baby tracker — feeds, diapers, and sleep — that stores everything
+A single-page baby tracker — feeds, diapers, and breast milk production — that stores everything
 in one Google Sheet. No server, no build step, no database. The whole app is
 `index.html`.
 
@@ -13,12 +13,20 @@ by the `SHARED_SHEET_ID` constant near the top of the script. Everyone who signs
 in uses that same sheet, so two parents see one shared log instead of each
 getting a private copy.
 
-The sheet has three tabs — `Feeds`, `Poops`, `Sleeps` — one row per entry, each
+The sheet has three tabs — `Feeds`, `Poops`, `Pumps` — one row per entry, each
 carrying an `id` and a `deleted` flag. Deletes are soft, so row numbers stay
-stable and nothing is ever actually removed.
+stable and nothing is ever actually removed. A `Sleeps` tab left over from an
+older version is ignored, not deleted.
 
 Each tab shows a form, a chart over a selectable range (past day / week /
-2 weeks), and the 25 most recent entries.
+2 weeks), and the 25 most recent entries. The Production chart plots every pump
+session at its actual time (left axis, ml) with per-day totals on the secondary
+axis. On "Past day" the window straddles midnight, so each calendar day's total
+is a filled block spanning that day's slice of the window.
+
+Volumes are in **ml**. Feeds logged before the switch were in oz and have a
+blank `unit` column; they are converted to ml when read (×29.5735). New feeds
+are written with `unit` = `ml`. The sheet is never rewritten.
 
 ## Setup
 
