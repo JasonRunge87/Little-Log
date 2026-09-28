@@ -13,7 +13,7 @@
     --bg:#14171c; --bg-elev:#1d2128; --bg-elev-2:#262b34; --line:#333944;
     --text:#eae7e0; --text-dim:#8d94a1;
     --feed:#e8a87c; --feed-dim:#6b5643;
-    --sleep:#7c9cbf; --sleep-dim:#3f4f60;
+    --pump:#b99ad6; --pump-dim:#4a3f5a;
     --poop:#a8b57a; --poop-dim:#545c3a;
     --warn:#c9645a; --radius:10px;
   }
@@ -112,7 +112,7 @@
   .submit-btn:disabled{opacity:.5;cursor:default;}
   .c-feed{background:var(--feed);}
   .c-poop{background:var(--poop);}
-  .c-sleep{background:var(--sleep);}
+  .c-pump{background:var(--pump);}
 
   /* ---- charts ---- */
   .range-select{
@@ -144,7 +144,7 @@
 
 <div id="authGate">
   <h1>Baby Runge</h1>
-  <p>Sign in with Google to sync feeding, diaper, and sleep logs to a spreadsheet in your own Google Drive.</p>
+  <p>Sign in with Google to sync feeding, diaper, and milk production logs to a spreadsheet in your own Google Drive.</p>
   <button class="google-btn" id="googleSignInBtn">
     <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 16.3 3 9.7 7.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 10-2 13.5-5.2l-6.2-5.3C29.3 36.4 26.8 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.6 40.5 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.5l6.2 5.3C40.9 36.4 44 30.8 44 24c0-1.4-.1-2.5-.4-3.5z"/></svg>
     Sign in with Google
@@ -160,7 +160,7 @@
 <div class="wrap" id="appRoot" style="display:none;">
 
   <header class="top">
-    <p class="eyebrow">feeding · diapers · sleep</p>
+    <p class="eyebrow">feeding · diapers · production</p>
     <h1>Baby Runge</h1>
     <div class="user-bar">
       <div class="who">
@@ -185,7 +185,7 @@
   <nav class="tabs">
     <button class="tab-btn active" data-tab="feed"><span class="dot" style="background:var(--feed)"></span>Feeding</button>
     <button class="tab-btn" data-tab="poop"><span class="dot" style="background:var(--poop)"></span>Diapers</button>
-    <button class="tab-btn" data-tab="sleep"><span class="dot" style="background:var(--sleep)"></span>Sleep</button>
+    <button class="tab-btn" data-tab="pump"><span class="dot" style="background:var(--pump)"></span>Production</button>
   </nav>
 
   <!-- ============ FEEDING ============ -->
@@ -209,7 +209,7 @@
           </select>
         </div>
         <div class="field"><label>Duration (min)</label><input type="number" id="feedDuration" min="0" placeholder="e.g. 15"></div>
-        <div class="field"><label>Amount (oz)</label><input type="number" id="feedAmount" min="0" step="0.1" placeholder="e.g. 4"></div>
+        <div class="field"><label>Amount (ml)</label><input type="number" id="feedAmount" min="0" step="1" placeholder="e.g. 120"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>Notes (optional)</label><textarea id="feedNotes" placeholder="fussy, spit up, distracted..."></textarea></div>
@@ -309,42 +309,52 @@
     </div>
   </div>
 
-  <!-- ============ SLEEP ============ -->
-  <div class="panel" id="panel-sleep">
+  <!-- ============ PRODUCTION ============ -->
+  <div class="panel" id="panel-pump">
     <div class="card">
-      <h2>Log sleep</h2>
+      <h2>Log a pump</h2>
       <div class="field-row">
-        <div class="field"><label>Date</label><input type="date" id="sleepDate"></div>
-        <div class="field"><label>Start time</label><input type="time" id="sleepStart"></div>
-        <div class="field"><label>End time</label><input type="time" id="sleepEnd"></div>
+        <div class="field"><label>Date</label><input type="date" id="pumpDate"></div>
+        <div class="field"><label>Time</label><input type="time" id="pumpTime"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Notes (optional)</label><textarea id="sleepNotes" placeholder="nap, night sleep, woke crying..."></textarea></div>
+        <div class="field">
+          <label>Side</label>
+          <select id="pumpSide">
+            <option value="Both">Both sides</option>
+            <option value="Left">Left</option>
+            <option value="Right">Right</option>
+          </select>
+        </div>
+        <div class="field"><label>Duration (min)</label><input type="number" id="pumpDuration" min="0" placeholder="e.g. 20"></div>
+        <div class="field"><label>Amount (ml)</label><input type="number" id="pumpAmount" min="0" step="1" placeholder="e.g. 90"></div>
       </div>
-      <p style="color:var(--text-dim);font-size:12px;margin:-4px 0 14px;">For sleep crossing midnight, enter the start date — an end time earlier than the start is treated as the next morning.</p>
-      <button class="submit-btn c-sleep" id="sleepSubmit">Save sleep</button>
+      <div class="field-row">
+        <div class="field"><label>Notes (optional)</label><textarea id="pumpNotes" placeholder="hand expressed, froze it, low output..."></textarea></div>
+      </div>
+      <button class="submit-btn c-pump" id="pumpSubmit">Save pump</button>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <h2>Sleep over time</h2>
-        <select class="range-select" id="sleepRange">
+        <h2>Production over time</h2>
+        <select class="range-select" id="pumpRange">
           <option value="day">Past day</option>
           <option value="week" selected>Past week</option>
           <option value="2week">Past 2 weeks</option>
         </select>
       </div>
       <div class="stat-row">
-        <div class="stat-box"><div class="label">Total in range</div><div class="value" id="sleepStatTotal">—</div></div>
-        <div class="stat-box"><div class="label">Naps in range</div><div class="value" id="sleepStatCount">—</div></div>
-        <div class="stat-box"><div class="label">Since last sleep</div><div class="value" id="sleepStatSince">—</div></div>
+        <div class="stat-box"><div class="label">Sessions in range</div><div class="value" id="pumpStatCount">—</div></div>
+        <div class="stat-box"><div class="label">Volume in range</div><div class="value" id="pumpStatVol">—</div></div>
+        <div class="stat-box"><div class="label">Since last pump</div><div class="value" id="pumpStatSince">—</div></div>
       </div>
-      <div class="chart-holder"><canvas id="chartSleep"></canvas></div>
+      <div class="chart-holder"><canvas id="chartPump"></canvas></div>
     </div>
 
     <div class="card">
-      <h2>Recent sleep</h2>
-      <div class="table-scroll" id="sleepLog"></div>
+      <h2>Recent pumps</h2>
+      <div class="table-scroll" id="pumpLog"></div>
     </div>
   </div>
 
@@ -490,13 +500,19 @@ document.getElementById('syncNowBtn').addEventListener('click', quietRefresh);
    Google Sheets data layer
    One spreadsheet in the user's Drive with three tabs. Every row carries an
    id and a "deleted" flag, so deletes are soft and row numbers stay stable.
+
+   Feed amounts used to be logged in oz with no unit recorded. The "unit"
+   column was appended after "deleted" so existing rows keep their layout; a
+   row with a blank unit is an old oz entry and is converted to ml on read.
+   An older file's Sleeps tab is left untouched -- the app just stops using it.
    ========================================================================= */
 const SHEET_COLUMNS = {
-  feeds:  ['id','date','time','type','duration','amount','notes','deleted'],
+  feeds:  ['id','date','time','type','duration','amount','notes','deleted','unit'],
   poops:  ['id','date','time','content','consist','color','stage','notes','deleted'],
-  sleeps: ['id','date','start','end','duration','notes','deleted']
+  pumps:  ['id','date','time','side','duration','amount','notes','deleted']
 };
-const SHEET_TAB = { feeds:'Feeds', poops:'Poops', sleeps:'Sleeps' };
+const SHEET_TAB = { feeds:'Feeds', poops:'Poops', pumps:'Pumps' };
+const ML_PER_OZ = 29.5735;
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function colLetter(i){ return String.fromCharCode(65+i); }
@@ -636,7 +652,7 @@ async function createSpreadsheet(){
     headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({
       properties:{ title: FILE_NAME },
-      sheets:[{properties:{title:'Feeds'}},{properties:{title:'Poops'}},{properties:{title:'Sleeps'}}]
+      sheets: Object.values(SHEET_TAB).map(title=> ({ properties:{ title } }))
     })
   });
   const id = created.spreadsheetId;
@@ -652,13 +668,30 @@ async function ensureTabs(){
   const meta = await api('https://sheets.googleapis.com/v4/spreadsheets/'+spreadsheetId+'?fields=sheets(properties(title))');
   const have = (meta.sheets || []).map(s=> s.properties.title);
   const missing = Object.keys(SHEET_TAB).filter(k=> !have.includes(SHEET_TAB[k]));
-  if(!missing.length) return;
-  await api('https://sheets.googleapis.com/v4/spreadsheets/'+spreadsheetId+':batchUpdate', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify({ requests: missing.map(k=> ({ addSheet:{ properties:{ title: SHEET_TAB[k] } } })) })
-  });
-  for(const k of missing) await writeHeaders(spreadsheetId, SHEET_TAB[k], SHEET_COLUMNS[k]);
+  if(missing.length){
+    await api('https://sheets.googleapis.com/v4/spreadsheets/'+spreadsheetId+':batchUpdate', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ requests: missing.map(k=> ({ addSheet:{ properties:{ title: SHEET_TAB[k] } } })) })
+    });
+    for(const k of missing) await writeHeaders(spreadsheetId, SHEET_TAB[k], SHEET_COLUMNS[k]);
+  }
+  await extendHeaders();
+}
+
+/* A tab that predates a newly appended column (Feeds "unit") has a short
+   header row. Only ever extend a header -- never rewrite one that is already
+   as long, so a hand-edited header is left alone. */
+async function extendHeaders(){
+  const kinds = Object.keys(SHEET_TAB);
+  const q = kinds.map(k=> 'ranges='+encodeURIComponent(SHEET_TAB[k]+'!1:1')).join('&');
+  const data = await api('https://sheets.googleapis.com/v4/spreadsheets/'+spreadsheetId+'/values:batchGet?'+q);
+  for(let i=0;i<kinds.length;i++){
+    const vr = (data.valueRanges || [])[i] || {};
+    const have = (vr.values && vr.values[0]) || [];
+    const cols = SHEET_COLUMNS[kinds[i]];
+    if(have.length < cols.length) await writeHeaders(spreadsheetId, SHEET_TAB[kinds[i]], cols);
+  }
 }
 
 async function writeHeaders(id, tab, headers){
@@ -729,7 +762,7 @@ function normalizeTime(v){
 }
 
 const DATE_COLS = { date:1 };
-const TIME_COLS = { time:1, start:1, end:1 };
+const TIME_COLS = { time:1 };
 
 function rowsToObjects(rows, cols){
   const delIdx = cols.indexOf('deleted');
@@ -777,23 +810,31 @@ function deleteEntry(kind, id){
   deleteEntryRemote(kind, id).then(loadAll).catch(err=>{ setSync('offline'); alert('Could not delete: '+err.message); });
 }
 
-let feeds = [], poops = [], sleeps = [];
+let feeds = [], poops = [], pumps = [];
+
+/* Every feed amount in memory is ml. Blank unit = logged before the switch,
+   in oz. The sheet itself is never rewritten. */
+function feedAmountMl(f){
+  const n = parseFloat(f.amount);
+  if(isNaN(n)) return '';
+  return String(f.unit === 'ml' ? n : Math.round(n * ML_PER_OZ));
+}
 
 async function loadAll(){
   setSync('busy');
   try{
-    const [f,p,s] = await Promise.all([getRows('Feeds'), getRows('Poops'), getRows('Sleeps')]);
-    feeds  = rowsToObjects(f, SHEET_COLUMNS.feeds);
-    poops  = rowsToObjects(p, SHEET_COLUMNS.poops);
-    sleeps = rowsToObjects(s, SHEET_COLUMNS.sleeps).map(x=> Object.assign({}, x, { duration: parseInt(x.duration||0,10) }));
+    const [f,p,u] = await Promise.all([getRows(SHEET_TAB.feeds), getRows(SHEET_TAB.poops), getRows(SHEET_TAB.pumps)]);
+    feeds = rowsToObjects(f, SHEET_COLUMNS.feeds).map(x=> Object.assign({}, x, { amount: feedAmountMl(x), unit:'ml' }));
+    poops = rowsToObjects(p, SHEET_COLUMNS.poops);
+    pumps = rowsToObjects(u, SHEET_COLUMNS.pumps);
     renderAll();
     setSync('ok');
   }catch(err){ setSync('offline'); throw err; }
 }
 
 function renderAll(){
-  renderFeedLog(); renderPoopLog(); renderSleepLog();
-  drawFeedChart(); drawPoopChart(); drawSleepChart();
+  renderFeedLog(); renderPoopLog(); renderPumpLog();
+  drawFeedChart(); drawPoopChart(); drawPumpChart();
 }
 
 /* =========================================================================
@@ -808,7 +849,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     // Chart.js sizes to a hidden canvas as 0px, so redraw once the panel shows
     if(btn.dataset.tab === 'feed') drawFeedChart();
     if(btn.dataset.tab === 'poop') drawPoopChart();
-    if(btn.dataset.tab === 'sleep') drawSleepChart();
+    if(btn.dataset.tab === 'pump') drawPumpChart();
   });
 });
 
@@ -820,8 +861,8 @@ function nowTimeStr(){
   const d = new Date();
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
-['feedDate','poopDate','sleepDate'].forEach(id=> document.getElementById(id).value = todayStr());
-['feedTime','poopTime'].forEach(id=> document.getElementById(id).value = nowTimeStr());
+['feedDate','poopDate','pumpDate'].forEach(id=> document.getElementById(id).value = todayStr());
+['feedTime','poopTime','pumpTime'].forEach(id=> document.getElementById(id).value = nowTimeStr());
 
 const poopSelections = { content:null, consist:null, color:null };
 document.querySelectorAll('.choice-btn').forEach(btn=>{
@@ -854,7 +895,8 @@ document.getElementById('feedSubmit').addEventListener('click', e=>{
       type: document.getElementById('feedType').value,
       duration: document.getElementById('feedDuration').value || '',
       amount: document.getElementById('feedAmount').value || '',
-      notes: document.getElementById('feedNotes').value || ''
+      notes: document.getElementById('feedNotes').value || '',
+      unit: 'ml'
     });
     document.getElementById('feedDuration').value = '';
     document.getElementById('feedAmount').value = '';
@@ -884,20 +926,23 @@ document.getElementById('poopSubmit').addEventListener('click', e=>{
   });
 });
 
-document.getElementById('sleepSubmit').addEventListener('click', e=>{
-  const date = document.getElementById('sleepDate').value;
-  const start = document.getElementById('sleepStart').value;
-  const end = document.getElementById('sleepEnd').value;
-  if(!date || !start || !end){ alert('Please set date, start and end time.'); return; }
-  const [sh,sm] = start.split(':').map(Number);
-  const [eh,em] = end.split(':').map(Number);
-  let duration = (eh*60+em) - (sh*60+sm);
-  if(duration <= 0) duration += 24*60;          // crossed midnight
+document.getElementById('pumpSubmit').addEventListener('click', e=>{
+  const date = document.getElementById('pumpDate').value;
+  const time = document.getElementById('pumpTime').value;
+  if(!date || !time){ alert('Please set a date and time.'); return; }
+  const amount = document.getElementById('pumpAmount').value;
+  if(amount === ''){ alert('Please enter the amount pumped.'); return; }
   withButton(e.currentTarget, async ()=>{
-    await addEntry('sleeps', { date, start, end, duration, notes: document.getElementById('sleepNotes').value || '' });
-    document.getElementById('sleepStart').value = '';
-    document.getElementById('sleepEnd').value = '';
-    document.getElementById('sleepNotes').value = '';
+    await addEntry('pumps', {
+      date, time, amount,
+      side: document.getElementById('pumpSide').value,
+      duration: document.getElementById('pumpDuration').value || '',
+      notes: document.getElementById('pumpNotes').value || ''
+    });
+    document.getElementById('pumpDuration').value = '';
+    document.getElementById('pumpAmount').value = '';
+    document.getElementById('pumpNotes').value = '';
+    document.getElementById('pumpTime').value = nowTimeStr();
   });
 });
 
@@ -916,7 +961,7 @@ function renderFeedLog(){
       '<tr><td>'+fmtDT(f.date,f.time)+'</td>'+
       '<td><span class="tag" style="background:var(--feed-dim);color:var(--feed)">'+esc(f.type)+'</span></td>'+
       '<td>'+(f.duration ? esc(f.duration)+' min' : '—')+'</td>'+
-      '<td>'+(f.amount ? esc(f.amount)+' oz' : '—')+'</td>'+
+      '<td>'+(f.amount ? esc(f.amount)+' ml' : '—')+'</td>'+
       '<td><button class="del-btn" data-kind="feeds" data-id="'+esc(f.id)+'">✕</button></td></tr>'
     ).join('') + '</table>';
 }
@@ -938,16 +983,17 @@ function renderPoopLog(){
     }).join('') + '</table>';
 }
 
-function renderSleepLog(){
-  const el = document.getElementById('sleepLog');
-  if(!sleeps.length){ el.innerHTML = '<div class="empty-state">No sleep logged yet.</div>'; return; }
-  const rows = [...sleeps].sort((a,b)=> (b.date+b.start).localeCompare(a.date+a.start)).slice(0,25);
-  el.innerHTML = '<table class="log"><tr><th>Date</th><th>Start</th><th>End</th><th>Dur</th><th></th></tr>' +
-    rows.map(s=>
-      '<tr><td>'+esc(s.date)+'</td><td>'+esc(s.start)+'</td><td>'+esc(s.end)+'</td>'+
-      '<td><span class="tag" style="background:var(--sleep-dim);color:var(--sleep)">'+
-        Math.floor(s.duration/60)+'h '+(s.duration%60)+'m</span></td>'+
-      '<td><button class="del-btn" data-kind="sleeps" data-id="'+esc(s.id)+'">✕</button></td></tr>'
+function renderPumpLog(){
+  const el = document.getElementById('pumpLog');
+  if(!pumps.length){ el.innerHTML = '<div class="empty-state">No pumps logged yet.</div>'; return; }
+  const rows = [...pumps].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time)).slice(0,25);
+  el.innerHTML = '<table class="log"><tr><th>When</th><th>Side</th><th>Dur</th><th>Amt</th><th></th></tr>' +
+    rows.map(p=>
+      '<tr><td>'+fmtDT(p.date,p.time)+'</td>'+
+      '<td><span class="tag" style="background:var(--pump-dim);color:var(--pump)">'+esc(p.side || '—')+'</span></td>'+
+      '<td>'+(p.duration ? esc(p.duration)+' min' : '—')+'</td>'+
+      '<td>'+(p.amount ? esc(p.amount)+' ml' : '—')+'</td>'+
+      '<td><button class="del-btn" data-kind="pumps" data-id="'+esc(p.id)+'">✕</button></td></tr>'
     ).join('') + '</table>';
 }
 
@@ -1031,7 +1077,7 @@ function chartOptions(scales){
   };
 }
 
-let chartFeed, chartPoop, chartSleep;
+let chartFeed, chartPoop, chartPump;
 
 function drawFeedChart(){
   const bs = buckets(document.getElementById('feedRange').value);
@@ -1047,7 +1093,7 @@ function drawFeedChart(){
   const last = [...feeds].sort((a,b)=> toTs(b.date,b.time)-toTs(a.date,a.time))[0];
 
   document.getElementById('feedStatCount').innerHTML = inRange + '<span> feeds</span>';
-  document.getElementById('feedStatVol').innerHTML = volTotal.toFixed(1) + '<span> oz</span>';
+  document.getElementById('feedStatVol').innerHTML = Math.round(volTotal) + '<span> ml</span>';
   document.getElementById('feedStatSince').innerHTML = last ? sinceLabel(toTs(last.date,last.time)) + '<span> ago</span>' : '—';
 
   if(chartFeed) chartFeed.destroy();
@@ -1060,13 +1106,13 @@ function drawFeedChart(){
         // dip that reads as negative feeds.
         { type:'bar', label:'Feeds', data:count, backgroundColor:'#e8a87c',
           borderRadius:3, maxBarThickness:26, yAxisID:'y', order:2 },
-        { type:'line', label:'Volume (oz)', data:vol, borderColor:'#7c9cbf', backgroundColor:'#7c9cbf',
+        { type:'line', label:'Volume (ml)', data:vol.map(v=> Math.round(v)), borderColor:'#7c9cbf', backgroundColor:'#7c9cbf',
           tension:0, pointRadius:2, spanGaps:true, yAxisID:'y1', order:1 }
       ]
     },
     options: chartOptions({
       y: countAxis(count),
-      y1: measureAxis({ position:'right', suggestedMax:4, grid:{ display:false } })
+      y1: measureAxis({ position:'right', suggestedMax:120, grid:{ display:false } })
     })
   });
 }
@@ -1105,40 +1151,99 @@ function drawPoopChart(){
   });
 }
 
-function drawSleepChart(){
-  const key = document.getElementById('sleepRange').value;
+/* Production plots each pump session at its real time, not snapped to a
+   bucket, so the x axis is linear in ms instead of the category axis the
+   other charts use (Chart.js's time axis needs a separate date adapter).
+   Ticks are pinned to the bucket starts so they land on local midnight /
+   the top of the hour. Totals per calendar day ride on the secondary axis.
+
+   "Past day" is a rolling 24h window, so it usually straddles midnight and
+   holds a slice of two days. Bars can't show that: on a linear axis Chart.js
+   sizes every bar to the narrowest gap between ticks, which there is one
+   hour. So on that range each day's total is drawn as a flat filled block
+   spanning exactly the part of that day inside the window. The value is still
+   the whole calendar day's total (today so far, all of yesterday). */
+function drawPumpChart(){
+  const key = document.getElementById('pumpRange').value;
   const bs = buckets(key);
-  const hrs = bs.map(()=> 0);
-  let inRange = 0, minsTotal = 0;
-  sleeps.forEach(s=>{
-    const i = bucketIndex(bs, toTs(s.date, s.start));   // bucketed by when the sleep started
-    if(i < 0) return;
-    hrs[i] += s.duration/60; inRange++; minsTotal += s.duration;
+  const xMin = bs[0].start, xMax = bs[bs.length-1].end;
+
+  // Calendar days touching the window -- the same as bs on the week ranges
+  const days = [];
+  for(const d = new Date(xMin); d.getTime() < xMax; d.setDate(d.getDate()+1)){
+    d.setHours(0,0,0,0);
+    const next = new Date(d); next.setDate(next.getDate()+1);
+    days.push({ start:d.getTime(), end:next.getTime(), label:todayStr(d).slice(5), total:0 });
+  }
+
+  const sessions = [];
+  let volTotal = 0;
+  pumps.forEach(p=>{
+    const ts = toTs(p.date, p.time);
+    const amt = parseFloat(p.amount);
+    if(isNaN(ts) || isNaN(amt)) return;
+    const day = days.find(d=> ts >= d.start && ts < d.end);
+    if(day) day.total += amt;                     // whole day, even outside the window
+    if(ts < xMin || ts >= xMax) return;
+    volTotal += amt;
+    sessions.push({ x:ts, y:amt, label:p.date + ' · ' + p.time + (p.side ? ' · ' + p.side : '') });
   });
-  const last = [...sleeps].sort((a,b)=> toTs(b.date,b.start)-toTs(a.date,a.start))[0];
+  sessions.sort((a,b)=> a.x - b.x);
+  const last = [...pumps].sort((a,b)=> toTs(b.date,b.time)-toTs(a.date,a.time))[0];
 
-  document.getElementById('sleepStatTotal').innerHTML = (minsTotal/60).toFixed(1) + '<span> hrs</span>';
-  document.getElementById('sleepStatCount').innerHTML = inRange + '<span> sessions</span>';
-  document.getElementById('sleepStatSince').innerHTML = last ? sinceLabel(toTs(last.date,last.start)) + '<span> ago</span>' : '—';
+  document.getElementById('pumpStatCount').innerHTML = sessions.length + '<span> sessions</span>';
+  document.getElementById('pumpStatVol').innerHTML = Math.round(volTotal) + '<span> ml</span>';
+  document.getElementById('pumpStatSince').innerHTML = last ? sinceLabel(toTs(last.date,last.time)) + '<span> ago</span>' : '—';
 
-  if(chartSleep) chartSleep.destroy();
-  chartSleep = new Chart(document.getElementById('chartSleep'), {
+  const tickLabel = v=>{
+    const d = new Date(v);
+    return key === 'day' ? pad2(d.getHours())+':00' : todayStr(d).slice(5);
+  };
+  const dailyLabel = 'Total per day (ml)';
+  const daily = key === 'day'
+    ? { type:'line', label:dailyLabel, yAxisID:'y1', order:2,
+        data: days.flatMap(d=>{
+          const t = Math.round(d.total), label = d.label + ' total';
+          return [{ x:Math.max(d.start, xMin), y:t, label }, { x:Math.min(d.end, xMax), y:t, label }];
+        }),
+        fill:'origin', tension:0, pointRadius:0, pointHoverRadius:0, borderWidth:1,
+        backgroundColor:'rgba(185,154,214,.28)', borderColor:'rgba(185,154,214,.55)' }
+    : { type:'bar', label:dailyLabel, yAxisID:'y1', order:2,
+        data: days.map(d=> ({ x:(d.start + d.end)/2, y:Math.round(d.total), label:d.label + ' total' })),
+        backgroundColor:'rgba(185,154,214,.28)', borderColor:'rgba(185,154,214,.55)', borderWidth:1, borderRadius:3 };
+
+  const options = chartOptions({
+    x:{
+      type:'linear', min:xMin, max:xMax,
+      afterBuildTicks: s=>{ s.ticks = bs.map(b=> ({ value:b.start })); },
+      ticks:{ color:TICK, maxRotation:0, autoSkipPadding:12, callback:tickLabel },
+      grid:{ display:false }
+    },
+    y:  measureAxis({ suggestedMax:120, title:{ display:true, text:'per session (ml)', color:TICK } }),
+    y1: measureAxis({ position:'right', suggestedMax:500, grid:{ display:false },
+                      title:{ display:true, text:'per day (ml)', color:TICK } })
+  });
+  // Sessions and bars sit at different x values, so "index" mode would pair
+  // unrelated points -- show whichever mark is nearest the cursor instead.
+  options.interaction = { mode:'nearest', intersect:false };
+  options.plugins.tooltip = { callbacks:{ title: items=> items.length ? items[0].raw.label : '' } };
+
+  if(chartPump) chartPump.destroy();
+  chartPump = new Chart(document.getElementById('chartPump'), {
     data:{
-      labels: bs.map(b=> b.label),
       datasets:[
-        { type:'line', label: key === 'day' ? 'Sleep by start hour (hrs)' : 'Sleep per day (hrs)',
-          data: hrs.map(h=> +h.toFixed(2)), borderColor:'#7c9cbf', backgroundColor:'rgba(124,156,191,.20)',
-          fill:true, tension:0, pointRadius:2 }
+        { type:'line', label:'Session (ml)', data:sessions, borderColor:'#b99ad6', backgroundColor:'#b99ad6',
+          tension:0, pointRadius:3, pointHoverRadius:5, yAxisID:'y', order:1 },
+        daily
       ]
     },
-    // hours are continuous, so decimal ticks are meaningful here
-    options: chartOptions({ y: measureAxis({ suggestedMax:2 }) })
+    options
   });
 }
 
 document.getElementById('feedRange').addEventListener('change', drawFeedChart);
 document.getElementById('poopRange').addEventListener('change', drawPoopChart);
-document.getElementById('sleepRange').addEventListener('change', drawSleepChart);
+document.getElementById('pumpRange').addEventListener('change', drawPumpChart);
 
 renderAll();
 </script>
